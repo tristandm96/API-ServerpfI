@@ -1,5 +1,5 @@
 
-const API_URL  ="http://localhost:5000/accounts"
+const API_URL  ="https://glory-fascinated-ticket.glitch.me/accounts"
 class Account_API {
     static initHttpState() {
         this.currentHttpError = "";
@@ -72,7 +72,7 @@ class Account_API {
         Account_API.initHttpState();
         return new Promise(resolve => {
             $.ajax({
-                url: "http://localhost:5000/token" + user,
+                url: "https://glory-fascinated-ticket.glitch.me/token" + user,
                 type: "PUT",
                 contentType: 'application/json',
                 success: () => { resolve(true); },
@@ -109,7 +109,7 @@ class Account_API {
         Account_API.initHttpState();
         return new Promise(resolve => {
             $.ajax({
-                url: "http://localhost:5000/token",
+                url: "/token",
                 type: "POST",
                 contentType: "application/json",
                 data: JSON.stringify(data),
@@ -121,7 +121,7 @@ class Account_API {
     static async Logout(id){
         return new Promise(resolve => {
             $.ajax({
-                url: "http://localhost:5000/token?Id=" + id,
+                url: "https://glory-fascinated-ticket.glitch.me/accounts/token?Id=" + id,
                 type: "DELETE",
                 contentType: "application/json",
                 error: (xhr) => { Account_API.setHttpErrorState(xhr); resolve(null); }
@@ -164,7 +164,7 @@ class Account_API {
     static async fetchCurrentUser(token) {
          return new Promise((resolve) => {
             $.ajax({
-                url: "http://localhost:5000/token/user",
+                url: "https://glory-fascinated-ticket.glitch.me/token/user",
                 type: "GET",
                 contentType: "application/json",
                 headers: {

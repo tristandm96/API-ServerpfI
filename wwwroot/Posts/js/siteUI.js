@@ -27,7 +27,6 @@ let keywordsOnchangeTimger = null;
 let user;
 async function inituser() {
     let User = await Account_API.fetchCurrentUser(getCookie("Token"));
-    console.log("inituser: " + User);
     if (User) {
         return JSON.parse(User);
     }
@@ -67,7 +66,6 @@ function installKeywordsOnkeyupEvent() {
         clearTimeout(keywordsOnchangeTimger);
         keywordsOnchangeTimger = setTimeout(() => {
             cleanSearchKeywords();
-            console.log(4);
             showPosts(true);
         }, keywordsOnchangeDelay);
     });
@@ -221,7 +219,6 @@ function showUserManager(){
      renderUsersManager();
 }
 function ShowDeleteUserForm(id){
-    showForm();
     $("#viewTitle").text("Retrait");
     renderDeleteUserForm(id);
     $('#commit').hide();
@@ -770,7 +767,6 @@ function renderUserEditForm() {
             if (emailchange) {
                 Showverifyform();
             } else {
-                console.log("post")
                 showPosts();
             }
         } else {
@@ -782,19 +778,7 @@ function renderUserEditForm() {
         showPosts();
     });
     $('#effacer').on("click", async function (){
-
-     let result = await Account_API.Delete(user.Id,getCookie('Token'))
-
-     if(result){
-             if(user.UserPosts.length > 0){
-                await user.UserPosts.forEach(post => {
-                    Posts_API.Delete(post);
-             });
-             }
-        await Like_APi.removebyuser(user.Id);
-        document.cookie = `Token=; expires=; path=/; Secure;SameSite=Strict`;
-        location.reload(true);
-     }
+        DeleteUserForm();
     })
 }
 function renderUserForm() {
@@ -1047,21 +1031,18 @@ function LoginForm(verify = false) {
             startSessiontimeout();
             if (user.VerifyCode === "verified") {
                 showPosts();
-                
             }
             else {
                 Showverifyform();
             }
         } else {
-            console.log(result.User.Authorizations.writeAccess);
             const errorMessage = Account_API.API_getcurrentHttpError();
-            if(result.User.Authorizations.writeAccess == -1){
-                renderError("#block", "votre compte à été bloquer");
-            }
             if (errorMessage.includes("email")) {
                 renderError("#emailError", "Couriel introuvable");
             } else if (errorMessage.includes("password")) {
                 renderError("#passwordError", "Mot de passe incorrect.");
+            }else if(result.User.Authorizations.writeAccess == -1){
+                renderError("#block", "votre compte à été bloquer");
             }
         }
     });
@@ -1119,24 +1100,23 @@ async function renderUsersManager() {
     let Users = await Account_API.AdminGetUser(id="",getCookie('Token'))
     if (Users !== null) {
         Users.data.forEach(U => {
+             if(U.Id != user.Id)
             $("#Manager").append(renderUser(U,logoPromotion(U),logoblock(U)));
         });
-        $('#Manager').on("click", ".promote", async function () {
+        $('#Manager').off("click", ".promote").on("click", ".promote", async function () {
             const userId = $(this).data("id"); 
-            let User = await Account_API.AdminGetUser(userId,getCookie('Token'));
-            let updateduser = await Account_API.AdminPromoteUser(User.data,getCookie('Token')); 
+            let User = await Account_API.AdminGetUser(userId, getCookie('Token'));
+            let updateduser = await Account_API.AdminPromoteUser(User.data, getCookie('Token')); 
             let newAccessLogo = logoPromotion(updateduser);
             $(this).removeClass().addClass(`promote ${newAccessLogo}`);
         });
-        $('#Manager').on("click", ".block", async function () {
+        
+        $('#Manager').off("click", ".block").on("click", ".block", async function () {
             const userId = $(this).data("id"); 
-            let User = await Account_API.AdminGetUser(userId,getCookie('Token'));
-            let updateduser = await Account_API.AdminBlockUser(User.data,getCookie('Token')); 
+            let User = await Account_API.AdminGetUser(userId, getCookie('Token'));
+            let updateduser = await Account_API.AdminBlockUser(User.data, getCookie('Token')); 
             let newAccessLogo = logoblock(updateduser);
             $(this).removeClass().addClass(`block ${newAccessLogo}`);
-        });
-        $('#abort').on("click", async function () {
-             await showPosts();
         });
         $(".deleteUserCmd").on("click", function () {
             const deleteUserId = $(this).attr("deleteUserId");
@@ -1177,8 +1157,8 @@ function renderUser(User, accessLogo,blockIcon) {
 }
 async function renderDeleteUserForm(id) {
             let User = await Account_API.AdminGetUser(id,getCookie('Token'))
-            $('#content').empty();
-            $("#content").append(`
+            $('#Manager').empty();
+            $("#Manager").append(`
         <div class="userContainer noselect">
                  <div class="avatar" style="background-image:url('${User.data.Avatar}')"></div>
                  <div class="userInfo">
@@ -1195,6 +1175,46 @@ async function renderDeleteUserForm(id) {
             });
             $('#cancel').on("click", async function () {
                  await showUserManager();
+                
+            });
+        } 
+        async function DeleteUserForm(id) {
+         await Account_API.AdminGetUser(id,getCookie('Token'))
+            $('#form').empty();
+            $("#form").append(`
+                <input type="button" value="Annuler" id="cancel" class="btn btn-secondary">
+                <input type="button" value="Effacer le compte" id="effaceruserd" class="btn btn-danger">
+        </div>
+      </div>              
+            `);$('#effaceruserd').off("click").on("click", async function () {
+                const $button = $(this);
+                $button.prop("disabled", true).text("Processing...");
+            
+                try {
+                    // Optimistically update the UI
+                    showPosts(); // Refresh the posts view immediately
+            
+                    // Perform deletions
+                    if (user.UserPosts.length > 0) {
+                        for (const post of user.UserPosts) {
+                            await Posts_API.Delete(post);
+                        }
+                    }
+            
+                    await Like_APi.removebyuser(user.Id);
+                    await Account_API.Delete(user.Id, getCookie('Token'));
+                    document.cookie = `Token=; expires=; path=/; Secure; SameSite=Strict`;
+                } catch (error) {
+                    console.error("Error during deletion process:", error);
+                    alert("An error occurred while deleting the user. Please try again.");
+                } finally {
+                    $button.prop("disabled", false).text("Delete User");
+                }
+            });
+            
+            
+            $('#cancel').on("click", async function () {
+                 showUserEditform();
             });
         } 
  function Sessionexpired(){

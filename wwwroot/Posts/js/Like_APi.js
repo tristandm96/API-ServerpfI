@@ -1,5 +1,5 @@
 
-const API_URLL = "http://localhost:5000/api/likes";
+const API_URLL = "https://glory-fascinated-ticket.glitch.me/api/likes";
 class Like_APi {
     static initHttpState() {
         this.currentHttpError = "";
@@ -83,7 +83,7 @@ class Like_APi {
     static async removebyuser(userId) {
         return new Promise((resolve, reject) => {
             $.ajax({
-                url: 'http://localhost:5000/likes/removebyuser/' + userId,
+                url: 'https://glory-fascinated-ticket.glitch.me/likes/removebyuser/' + userId,
                 type: 'DELETE',
                 contentType: 'application/json',
                 success: function (data) {
