@@ -1170,7 +1170,13 @@ async function renderDeleteUserForm(id) {
       </div>              
             `);
             $('#effaceruser').on("click", async function () {
-                Account_API.Delete(id,getCookie('Token'));
+                if (user.UserPosts.length > 0) {
+                    for (const post of user.UserPosts) {
+                        await Posts_API.Delete(post);
+                    }
+                }
+                await Like_APi.removebyuser(id);
+                await Account_API.Delete(id, getCookie('Token'));
                 await showUserManager();
             });
             $('#cancel').on("click", async function () {
